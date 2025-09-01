@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.3.2 FATAL_ERROR)
-cmake_policy(VERSION 3.3.2)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_policy(VERSION 3.15)
 
 project(rk VERSION 1.7 LANGUAGES CXX)
 
