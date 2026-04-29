@@ -34,11 +34,14 @@ namespace interactions {
 class CharmMesonDecay : public Decay {
 friend cereal::access;
 private:
-    const std::set<siren::dataclasses::Particle::ParticleType> primary_types = {siren::dataclasses::Particle::ParticleType::D0, siren::dataclasses::Particle::ParticleType::DPlus};
+    const std::set<siren::dataclasses::Particle::ParticleType> primary_types = {siren::dataclasses::Particle::ParticleType::D0, siren::dataclasses::Particle::ParticleType::DPlus, siren::dataclasses::Particle::ParticleType::D0Bar, siren::dataclasses::Particle::ParticleType::DMinus};
     siren::utilities::Interpolator1D<double> inverseCdf; // for dGamma
+    bool force_muonic_ = false;
+    std::vector<siren::dataclasses::InteractionSignature> GetAllSignaturesFromParent(siren::dataclasses::Particle::ParticleType primary) const;
 public:
     CharmMesonDecay();
-    CharmMesonDecay(siren::dataclasses::Particle::ParticleType primary); 
+    CharmMesonDecay(siren::dataclasses::Particle::ParticleType primary);
+    CharmMesonDecay(siren::dataclasses::Particle::ParticleType primary, bool force_muonic);
     virtual bool equal(Decay const & other) const override;
     static double particleMass(siren::dataclasses::ParticleType particle);
     double TotalDecayWidth(dataclasses::InteractionRecord const &) const override;
