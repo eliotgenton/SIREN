@@ -62,6 +62,22 @@ CharmMesonDecay3Body::CharmMesonDecay3Body(siren::dataclasses::Particle::Particl
 
     mD = particleMass(siren::dataclasses::Particle::ParticleType::D0);
     mK = particleMass(siren::dataclasses::Particle::ParticleType::KMinus);
+  } else if (primary == siren::dataclasses::Particle::ParticleType::DMinus) {
+    // CP-conjugate of DPlus: same form factor and masses, K0 instead of K0Bar.
+    constants[0] = 0.725;
+    constants[1] = 0.44;
+    constants[2] = 2.01027;
+
+    mD = particleMass(siren::dataclasses::Particle::ParticleType::DMinus);
+    mK = particleMass(siren::dataclasses::Particle::ParticleType::K0);
+  } else if (primary == siren::dataclasses::Particle::ParticleType::D0Bar) {
+    // CP-conjugate of D0: same form factor and masses, KPlus instead of KMinus.
+    constants[0] = 0.719;
+    constants[1] = 0.50;
+    constants[2] = 2.00697;
+
+    mD = particleMass(siren::dataclasses::Particle::ParticleType::D0Bar);
+    mK = particleMass(siren::dataclasses::Particle::ParticleType::KPlus);
   }
 
   computeDiffGammaCDF(constants, mD, mK);
@@ -153,6 +169,19 @@ double CharmMesonDecay3Body::TotalDecayWidthForFinalState(dataclasses::Interacti
     std::set<siren::dataclasses::Particle::ParticleType> kminus_muplus_numu = {siren::dataclasses::Particle::ParticleType::KMinus,
                                                                             siren::dataclasses::Particle::ParticleType::MuPlus,
                                                                             siren::dataclasses::Particle::ParticleType::NuMu};
+    // CP-conjugate decay-mode sets for anti-D mesons (DMinus, D0Bar).
+    std::set<siren::dataclasses::Particle::ParticleType> k0bar_eminus_nuebar = {siren::dataclasses::Particle::ParticleType::K0,
+                                                                            siren::dataclasses::Particle::ParticleType::EMinus,
+                                                                            siren::dataclasses::Particle::ParticleType::NuEBar};
+    std::set<siren::dataclasses::Particle::ParticleType> kplus_eminus_nuebar = {siren::dataclasses::Particle::ParticleType::KPlus,
+                                                                            siren::dataclasses::Particle::ParticleType::EMinus,
+                                                                            siren::dataclasses::Particle::ParticleType::NuEBar};
+    std::set<siren::dataclasses::Particle::ParticleType> k0bar_muminus_numubar = {siren::dataclasses::Particle::ParticleType::K0,
+                                                                            siren::dataclasses::Particle::ParticleType::MuMinus,
+                                                                            siren::dataclasses::Particle::ParticleType::NuMuBar};
+    std::set<siren::dataclasses::Particle::ParticleType> kplus_muminus_numubar = {siren::dataclasses::Particle::ParticleType::KPlus,
+                                                                            siren::dataclasses::Particle::ParticleType::MuMinus,
+                                                                            siren::dataclasses::Particle::ParticleType::NuMuBar};
     std::set<siren::dataclasses::Particle::ParticleType> hadrons = {siren::dataclasses::Particle::ParticleType::Hadrons};
     if (primary == siren::dataclasses::Particle::ParticleType::DPlus) {
       tau = 1040 * (1e-15);
@@ -164,6 +193,18 @@ double CharmMesonDecay3Body::TotalDecayWidthForFinalState(dataclasses::Interacti
       if (secondaries == kminus_eplus_nue) {branching_ratio = .0649;} // e+ semileptonic mode according to pdg
       else if (secondaries == kminus_muplus_numu) {branching_ratio = .067;} // mu+ anything according to pdg
       else if (secondaries == hadrons) {branching_ratio = (1 - .0649 - .067);} // everything else
+    } else if (primary == siren::dataclasses::Particle::ParticleType::DMinus) {
+      // CP-conjugate of DPlus: identical lifetime and BRs (mirrors DPlus block exactly).
+      tau = 1040 * (1e-15);
+      if (secondaries == k0bar_eminus_nuebar) {branching_ratio = .1607;} // CP-mirror of DPlus -> K0Bar e+ nue
+      else if (secondaries == k0bar_muminus_numubar) {branching_ratio = .176;} // CP-mirror of DPlus -> K0Bar mu+ numu
+      else if (secondaries == hadrons) {branching_ratio = (1 - .1607 - .176);}
+    } else if (primary == siren::dataclasses::Particle::ParticleType::D0Bar) {
+      // CP-conjugate of D0: identical lifetime and BRs.
+      tau = 410.1 * (1e-15);
+      if (secondaries == kplus_eminus_nuebar) {branching_ratio = .0649;}
+      else if (secondaries == kplus_muminus_numubar) {branching_ratio = .067;}
+      else if (secondaries == hadrons) {branching_ratio = (1 - .0649 - .067);}
     }
     else {
         std::cout << "this decay mode is not yet implemented!" << std::endl;
@@ -218,6 +259,30 @@ std::vector<dataclasses::InteractionSignature> CharmMesonDecay3Body::GetPossible
       signatures.push_back(semilep_signature);
       hadron_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::Hadrons;
       signatures.push_back(hadron_signature);
+    } else if (primary==siren::dataclasses::Particle::ParticleType::DMinus) {
+      // CP-conjugate of DPlus: K0 + l- + nubar_l
+      semilep_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::K0;
+      semilep_signature.secondary_types[1] = siren::dataclasses::Particle::ParticleType::EMinus;
+      semilep_signature.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuEBar;
+      signatures.push_back(semilep_signature);
+      semilep_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::K0;
+      semilep_signature.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuMinus;
+      semilep_signature.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMuBar;
+      signatures.push_back(semilep_signature);
+      hadron_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::Hadrons;
+      signatures.push_back(hadron_signature);
+    } else if (primary==siren::dataclasses::Particle::ParticleType::D0Bar) {
+      // CP-conjugate of D0: K+ + l- + nubar_l
+      semilep_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::KPlus;
+      semilep_signature.secondary_types[1] = siren::dataclasses::Particle::ParticleType::EMinus;
+      semilep_signature.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuEBar;
+      signatures.push_back(semilep_signature);
+      semilep_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::KPlus;
+      semilep_signature.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuMinus;
+      semilep_signature.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMuBar;
+      signatures.push_back(semilep_signature);
+      hadron_signature.secondary_types[0] = siren::dataclasses::Particle::ParticleType::Hadrons;
+      signatures.push_back(hadron_signature);
     }
     else {
       std::cout << "this D meson decay has not been implemented yet" << std::endl;
@@ -238,6 +303,16 @@ std::vector<double> CharmMesonDecay3Body::FormFactorFromRecord(dataclasses::Cros
     constants[0] = 0.719; // this is f^+(0)|V_cs| for neutral D
     constants[1] = 0.50; // this is alpha, same for all K final states
     constants[2] = 2.00697; // this is excited neutral D meson
+  } else if (signature.primary_type == dataclasses::Particle::ParticleType::DMinus && signature.secondary_types[0] == siren::dataclasses::Particle::ParticleType::K0) {
+    // CP-conjugate of DPlus -> K0Bar
+    constants[0] = 0.725;
+    constants[1] = 0.44;
+    constants[2] = 2.01027;
+  } else if (signature.primary_type == dataclasses::Particle::ParticleType::D0Bar && signature.secondary_types[0] == siren::dataclasses::Particle::ParticleType::KPlus) {
+    // CP-conjugate of D0 -> KMinus
+    constants[0] = 0.719;
+    constants[1] = 0.50;
+    constants[2] = 2.00697;
   }
   return constants;
 }
