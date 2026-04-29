@@ -15,7 +15,9 @@
 #include "../../public/SIREN/interactions/CharmMesonDecay.h"
 #include "../../public/SIREN/interactions/CharmMesonDecay3Body.h"
 #include "../../public/SIREN/interactions/DMesonELoss.h"
+#ifdef SIREN_HAS_PYTHIA
 #include "../../public/SIREN/interactions/PythiaDISCrossSection.h"
+#endif
 
 #include "./Interaction.h"
 #include "./CrossSection.h"
@@ -33,7 +35,9 @@
 #include "./CharmMesonDecay.h"
 #include "./CharmMesonDecay3Body.h"
 #include "./DMesonELoss.h"
+#ifdef SIREN_HAS_PYTHIA
 #include "./PythiaDISCrossSection.h"
+#endif
 #include "./MarleyCrossSection.h"
 
 #include <pybind11/pybind11.h>
@@ -65,6 +69,8 @@ PYBIND11_MODULE(interactions,m) {
     register_NeutrissimoDecay(m);
     register_InteractionCollection(m);
     register_DummyCrossSection(m);
+#ifdef SIREN_HAS_PYTHIA
     register_PythiaDISCrossSection(m);
+#endif
     register_MarleyCrossSection(m);
 }

@@ -93,6 +93,8 @@ package_add_test(UnitTest_DipoleFromTable ${PROJECT_SOURCE_DIR}/projects/interac
 
 pybind11_add_module(interactions ${PROJECT_SOURCE_DIR}/projects/interactions/private/pybindings/interactions.cxx)
 if(SIREN_HAS_PYTHIA)
+    target_compile_definitions(interactions PRIVATE SIREN_HAS_PYTHIA)
+    target_compile_definitions(SIREN_interactions PRIVATE SIREN_HAS_PYTHIA)
     target_link_directories(interactions PRIVATE ${PYTHIA8_DIR}/lib ${LHAPDF_DIR}/lib)
     target_link_libraries(interactions PRIVATE SIREN photospline rk_static pybind11::embed pythia8 LHAPDF dl pthread)
 else()
