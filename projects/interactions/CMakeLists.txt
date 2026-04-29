@@ -1,4 +1,3 @@
-
 #core files
 LIST (APPEND interactions_SOURCES
     ${PROJECT_SOURCE_DIR}/projects/interactions/private/Decay.cxx
@@ -21,9 +20,26 @@ LIST (APPEND interactions_SOURCES
     ${PROJECT_SOURCE_DIR}/projects/interactions/private/CharmMesonDecay3Body.cxx
     ${PROJECT_SOURCE_DIR}/projects/interactions/private/DMesonELoss.cxx
     ${PROJECT_SOURCE_DIR}/projects/interactions/private/QuarkDISFromSpline.cxx
-    ${PROJECT_SOURCE_DIR}/projects/interactions/private/PythiaDISCrossSection.cxx
 
 )
+
+# Pythia8 + LHAPDF for PythiaDISCrossSection (optional).
+# If PYTHIA8_DIR is set AND points at a tree with Pythia8/Pythia.h, we build
+# PythiaDISCrossSection and link pythia8/LHAPDF; otherwise we skip both cleanly
+# so the rest of SIREN_interactions still builds on hosts without Pythia8.
+set(PYTHIA8_DIR "" CACHE PATH "Pythia8 installation root (leave empty to disable PythiaDISCrossSection)")
+set(LHAPDF_DIR "" CACHE PATH "LHAPDF installation root (only used if PYTHIA8_DIR is set)")
+set(SIREN_HAS_PYTHIA OFF)
+if(PYTHIA8_DIR AND EXISTS "${PYTHIA8_DIR}/include/Pythia8/Pythia.h")
+    set(SIREN_HAS_PYTHIA ON)
+    message(STATUS "PythiaDISCrossSection: ENABLED (PYTHIA8_DIR=${PYTHIA8_DIR})")
+    LIST (APPEND interactions_SOURCES
+        ${PROJECT_SOURCE_DIR}/projects/interactions/private/PythiaDISCrossSection.cxx
+    )
+else()
+    message(STATUS "PythiaDISCrossSection: DISABLED (PYTHIA8_DIR not set or missing Pythia8/Pythia.h)")
+endif()
+
 if(TARGET MARLEY)
     LIST (APPEND interactions_SOURCES
         ${PROJECT_SOURCE_DIR}/projects/interactions/private/MarleyCrossSection.cxx
@@ -32,20 +48,17 @@ endif()
 add_library(SIREN_interactions OBJECT ${interactions_SOURCES})
 set_property(TARGET SIREN_interactions PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-# Pythia8 + LHAPDF for PythiaDISCrossSection
-# Defaults target our cluster installs; override via -DPYTHIA8_DIR=... on cmake cmdline
-set(PYTHIA8_DIR "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/miaochenjin/local/pythia8315"
-    CACHE PATH "Pythia8 installation root")
-set(LHAPDF_DIR "/cvmfs/icecube.opensciencegrid.org/py3-v4.1.1/RHEL_8_x86_64"
-    CACHE PATH "LHAPDF installation root")
-
 target_include_directories(SIREN_interactions PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/projects/interactions/public/>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SIREN/interactions/>
     ${PYTHON_INCLUDE_DIRS}
-    ${PYTHIA8_DIR}/include
-    ${LHAPDF_DIR}/include
 )
+if(SIREN_HAS_PYTHIA)
+    target_include_directories(SIREN_interactions PUBLIC
+        ${PYTHIA8_DIR}/include
+        ${LHAPDF_DIR}/include
+    )
+endif()
 
 target_link_libraries(SIREN_interactions
     PRIVATE
@@ -62,8 +75,10 @@ target_link_libraries(SIREN_interactions
 )
 apply_siren_compile_options(SIREN_interactions)
 
-target_link_directories(SIREN_interactions PUBLIC ${PYTHIA8_DIR}/lib ${LHAPDF_DIR}/lib)
-target_link_libraries(SIREN_interactions PUBLIC pythia8 LHAPDF dl pthread)
+if(SIREN_HAS_PYTHIA)
+    target_link_directories(SIREN_interactions PUBLIC ${PYTHIA8_DIR}/lib ${LHAPDF_DIR}/lib)
+    target_link_libraries(SIREN_interactions PUBLIC pythia8 LHAPDF dl pthread)
+endif()
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/projects/interactions/public/"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -77,8 +92,12 @@ package_add_test(UnitTest_DipoleFromTable ${PROJECT_SOURCE_DIR}/projects/interac
 #package_add_test(UnitTest_ElasticScattering ${PROJECT_SOURCE_DIR}/projects/interactions/private/test/ElasticScattering_TEST.cxx)
 
 pybind11_add_module(interactions ${PROJECT_SOURCE_DIR}/projects/interactions/private/pybindings/interactions.cxx)
-target_link_directories(interactions PRIVATE ${PYTHIA8_DIR}/lib ${LHAPDF_DIR}/lib)
-target_link_libraries(interactions PRIVATE SIREN photospline rk_static pybind11::embed pythia8 LHAPDF dl pthread)
+if(SIREN_HAS_PYTHIA)
+    target_link_directories(interactions PRIVATE ${PYTHIA8_DIR}/lib ${LHAPDF_DIR}/lib)
+    target_link_libraries(interactions PRIVATE SIREN photospline rk_static pybind11::embed pythia8 LHAPDF dl pthread)
+else()
+    target_link_libraries(interactions PRIVATE SIREN photospline rk_static pybind11::embed)
+endif()
 if(TARGET MARLEY)
     target_compile_definitions(interactions PRIVATE SIREN_HAS_MARLEY)
 endif()
