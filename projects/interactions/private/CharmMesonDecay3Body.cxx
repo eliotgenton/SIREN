@@ -84,13 +84,42 @@ CharmMesonDecay3Body::CharmMesonDecay3Body(siren::dataclasses::Particle::Particl
 
 }
 
+CharmMesonDecay3Body::CharmMesonDecay3Body(siren::dataclasses::Particle::ParticleType primary, bool force_muonic)
+    : force_muonic_(force_muonic) {
+
+  std::vector<double> constants;
+  constants.resize(3);
+  double mD;
+  double mK;
+
+  if (primary == siren::dataclasses::Particle::ParticleType::DPlus) {
+    constants[0] = 0.725; constants[1] = 0.44; constants[2] = 2.01027;
+    mD = particleMass(siren::dataclasses::Particle::ParticleType::DPlus);
+    mK = particleMass(siren::dataclasses::Particle::ParticleType::K0Bar);
+  } else if (primary == siren::dataclasses::Particle::ParticleType::D0) {
+    constants[0] = 0.719; constants[1] = 0.50; constants[2] = 2.00697;
+    mD = particleMass(siren::dataclasses::Particle::ParticleType::D0);
+    mK = particleMass(siren::dataclasses::Particle::ParticleType::KMinus);
+  } else if (primary == siren::dataclasses::Particle::ParticleType::DMinus) {
+    constants[0] = 0.725; constants[1] = 0.44; constants[2] = 2.01027;
+    mD = particleMass(siren::dataclasses::Particle::ParticleType::DMinus);
+    mK = particleMass(siren::dataclasses::Particle::ParticleType::K0);
+  } else if (primary == siren::dataclasses::Particle::ParticleType::D0Bar) {
+    constants[0] = 0.719; constants[1] = 0.50; constants[2] = 2.00697;
+    mD = particleMass(siren::dataclasses::Particle::ParticleType::D0Bar);
+    mK = particleMass(siren::dataclasses::Particle::ParticleType::KPlus);
+  }
+
+  computeDiffGammaCDF(constants, mD, mK);
+}
+
 bool CharmMesonDecay3Body::equal(Decay const & other) const {
     const CharmMesonDecay3Body* x = dynamic_cast<const CharmMesonDecay3Body*>(&other);
 
     if(!x)
         return false;
     else
-        return primary_types == x->primary_types;
+        return primary_types == x->primary_types && force_muonic_ == x->force_muonic_;
 }
 
 
@@ -133,10 +162,11 @@ double CharmMesonDecay3Body::TotalDecayWidth(dataclasses::InteractionRecord cons
     return TotalDecayWidth(record.signature.primary_type);
 }
 
-// in this implementation, should we take total decay width to be only the channels we considered?
+// Always use the full decay width (all channels) for correct physical decay rate,
+// even when force_muonic_ is set. Mirrors CharmMesonDecay::TotalDecayWidth.
 double CharmMesonDecay3Body::TotalDecayWidth(siren::dataclasses::Particle::ParticleType primary) const {
     double total_width = 0;
-    std::vector<dataclasses::InteractionSignature> possible_signatures = GetPossibleSignaturesFromParent(primary);
+    std::vector<dataclasses::InteractionSignature> possible_signatures = GetAllSignaturesFromParent(primary);
     for (auto sig : possible_signatures) {
       // make a fake record and full from total decay width for final state
       siren::dataclasses::InteractionRecord fake_record;
@@ -222,7 +252,8 @@ std::vector<dataclasses::InteractionSignature> CharmMesonDecay3Body::GetPossible
     return signatures;
 }
 
-std::vector<dataclasses::InteractionSignature> CharmMesonDecay3Body::GetPossibleSignaturesFromParent(siren::dataclasses::Particle::ParticleType primary) const {
+// Returns all decay channels regardless of force_muonic_ setting.
+std::vector<dataclasses::InteractionSignature> CharmMesonDecay3Body::GetAllSignaturesFromParent(siren::dataclasses::Particle::ParticleType primary) const {
     std::vector<dataclasses::InteractionSignature> signatures;
     // initialize semileptonic signatures
     dataclasses::InteractionSignature semilep_signature;
@@ -287,6 +318,40 @@ std::vector<dataclasses::InteractionSignature> CharmMesonDecay3Body::GetPossible
     else {
       std::cout << "this D meson decay has not been implemented yet" << std::endl;
     }
+    return signatures;
+}
+
+// When force_muonic_ is true, returns only the muonic semileptonic channel.
+// Lepton charge / neutrino flavour track the D-meson charm quantum number:
+//   DPlus, D0     decay c    -> s    l+ nu_l   (mu+ nu_mu)
+//   DMinus, D0Bar decay cbar -> sbar l- nubar  (mu- nubar_mu)
+std::vector<dataclasses::InteractionSignature> CharmMesonDecay3Body::GetPossibleSignaturesFromParent(siren::dataclasses::Particle::ParticleType primary) const {
+    if (!force_muonic_) {
+        return GetAllSignaturesFromParent(primary);
+    }
+    std::vector<dataclasses::InteractionSignature> signatures;
+    dataclasses::InteractionSignature sig;
+    sig.primary_type = primary;
+    sig.target_type = siren::dataclasses::Particle::ParticleType::Decay;
+    sig.secondary_types.resize(3);
+    if (primary==siren::dataclasses::Particle::ParticleType::DPlus) {
+      sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::K0Bar;
+      sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuPlus;
+      sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMu;
+    } else if (primary==siren::dataclasses::Particle::ParticleType::D0) {
+      sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::KMinus;
+      sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuPlus;
+      sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMu;
+    } else if (primary==siren::dataclasses::Particle::ParticleType::DMinus) {
+      sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::K0;
+      sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuMinus;
+      sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMuBar;
+    } else if (primary==siren::dataclasses::Particle::ParticleType::D0Bar) {
+      sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::KPlus;
+      sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuMinus;
+      sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMuBar;
+    }
+    signatures.push_back(sig);
     return signatures;
 }
 

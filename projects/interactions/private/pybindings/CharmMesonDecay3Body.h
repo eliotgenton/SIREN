@@ -26,6 +26,8 @@ void register_CharmMesonDecay3Body(pybind11::module_ & m) {
         .def(init<>())
         .def(init<siren::dataclasses::Particle::ParticleType>(),
                 arg("primary_type"))
+        .def(init<siren::dataclasses::Particle::ParticleType, bool>(),
+                arg("primary_type"), arg("force_muonic"))
         .def(self == self)
         .def("SampleFinalState",&CharmMesonDecay3Body::SampleFinalState)
         .def("GetPossibleSignatures",&CharmMesonDecay3Body::GetPossibleSignatures)
