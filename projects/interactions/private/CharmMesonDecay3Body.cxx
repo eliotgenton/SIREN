@@ -532,11 +532,17 @@ void CharmMesonDecay3Body::SampleFinalState(dataclasses::CrossSectionDistributio
     // K/K* mixing fractions from PDG semileptonic branching ratios
     double mKstar = 0.89166;  // K*(892) mass [GeV]
     double fracK;
-    if (record.signature.primary_type == siren::dataclasses::Particle::ParticleType::DPlus) {
-        // D+ -> Kbar0 l nu:  BR_K = 8.74%, BR_K*bar = 5.33%
+    // Charged D mesons (DPlus and its CP-conjugate DMinus) share the same
+    // semileptonic branching fractions (PDG: D+->Kbar0 l nu 8.74%, D+->K*bar0 l nu 5.33%).
+    // Neutral D mesons (D0 and D0Bar) use the neutral-D fractions.
+    bool isChargedD = (
+        record.signature.primary_type == siren::dataclasses::Particle::ParticleType::DPlus ||
+        record.signature.primary_type == siren::dataclasses::Particle::ParticleType::DMinus);
+    if (isChargedD) {
+        // D+/D- -> K0bar/K0 l nu:  BR_K = 8.74%, BR_K*bar/K* = 5.33%
         fracK = 8.74 / (8.74 + 5.33);
     } else {
-        // D0 -> K- l nu:     BR_K = 3.41%, BR_K*- = 2.17%
+        // D0/D0Bar -> K-/K+ l nu:  BR_K = 3.41%, BR_K*- = 2.17%
         fracK = 3.41 / (3.41 + 2.17);
     }
     double mK = (random->Uniform(0, 1) < fracK) ? mK_base : mKstar;
