@@ -94,3 +94,9 @@ def test_load_flux_t2k_kaons(utilities, installed_resources_root, tmp_path):
     out = utilities.load_flux("T2K_Kaons", "numu_PLUS", abs_flux_dir=str(tmp_path))
     assert Path(out).exists()
     assert Path(out).stat().st_size > 0
+
+
+def test_six_moves_import_not_intercepted():
+    import siren.resources  # noqa: F401
+    from six.moves import _thread
+    assert _thread is not None
