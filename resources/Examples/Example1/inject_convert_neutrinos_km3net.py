@@ -323,7 +323,7 @@ def add_secondary_to_controller(controller, secondary_type, secondary_xsecs, sec
     secondary_physical_process = siren.injection.PhysicalProcess()
     secondary_injection_process.primary_type = secondary_type
     secondary_physical_process.primary_type = secondary_type
-    secondary_injection_process.AddSecondaryInjectionDistribution(siren.distributions.SecondaryPhysicalVertexDistribution())
+    secondary_injection_process.distributions = [siren.distributions.SecondaryPhysicalVertexDistribution()]
     controller.secondary_injection_processes.append(secondary_injection_process)
     controller.secondary_physical_processes.append(secondary_physical_process)
 
