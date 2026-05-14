@@ -306,7 +306,7 @@ def build_distributions(config, controller, primary_type):
     #position distribution
     muon_range_func = siren.distributions.LeptonDepthFunction()
     position_distribution = siren.distributions.ColumnDepthPositionDistribution(
-        600, 600.0, muon_range_func, set(controller.GetDetectorModelTargets()[0]))
+        600, 600.0, muon_range_func)
     
     p_inj["position"] = position_distribution
     
@@ -362,21 +362,21 @@ def run_simulation(config: dict,detname: str, output: str, seed: int):
     controller.SetProcesses(primary_type, inj_distrib, phys_distrib)
     
     if interaction == "charm":
-        
-        charms = siren.dataclasses.Particle.ParticleType.Charm
         DPlus  = siren.dataclasses.Particle.ParticleType.DPlus
         D0     = siren.dataclasses.Particle.ParticleType.D0
-        charm_hadronization = siren.interactions.CharmHadronization()
-        DPlus_decay  = siren.interactions.CharmMesonDecay(primary_type=DPlus)
-        D0_decay     = siren.interactions.CharmMesonDecay(primary_type=D0)
-        D_energy_loss= siren.interactions.DMesonELoss()
-        
-        secondary_charm_collection = add_secondary_to_controller(controller, charms, charm_hadronization)
-        secondary_DPlus_collection = add_secondary_to_controller(controller, DPlus, D_energy_loss, DPlus_decay)
-        secondary_D0_collection = add_secondary_to_controller(controller, D0, D_energy_loss, D0_decay)
-        
-        #secondaries = add_charm_secondaries(controller, primary_type)
-        controller.SetInteractions(primary_xs, [secondary_charm_collection, secondary_D0_collection, secondary_DPlus_collection])
+        D0Bar  = siren.dataclasses.Particle.ParticleType.D0Bar
+        DMinus = siren.dataclasses.Particle.ParticleType.DMinus
+        force_muonic = (config.get("decay", "") == "muonic")
+        DPlus_decay  = siren.interactions.CharmMesonDecay(primary_type=DPlus,  force_muonic=force_muonic)
+        D0_decay     = siren.interactions.CharmMesonDecay(primary_type=D0,     force_muonic=force_muonic)
+        D0Bar_decay  = siren.interactions.CharmMesonDecay(primary_type=D0Bar,  force_muonic=force_muonic)
+        DMinus_decay = siren.interactions.CharmMesonDecay(primary_type=DMinus, force_muonic=force_muonic)
+        D_energy_loss = siren.interactions.DMesonELoss()
+        secondary_DPlus_collection  = add_secondary_to_controller(controller, DPlus,  D_energy_loss, DPlus_decay)
+        secondary_D0_collection     = add_secondary_to_controller(controller, D0,     D_energy_loss, D0_decay)
+        secondary_D0Bar_collection  = add_secondary_to_controller(controller, D0Bar,  D_energy_loss, D0Bar_decay)
+        secondary_DMinus_collection = add_secondary_to_controller(controller, DMinus, D_energy_loss, DMinus_decay)
+        controller.SetInteractions(primary_xs, [secondary_DPlus_collection, secondary_D0_collection, secondary_D0Bar_collection, secondary_DMinus_collection])
         print("This is the controller after adding charm secondaries: ", controller)
     controller.Initialize()
     def stop(datum, i):
