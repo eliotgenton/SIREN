@@ -15,7 +15,7 @@
 include(FindPackageHandleStandardArgs)
 
 set(CFITSIO_FIND_QUIETLY TRUE)
-set(CFITSIO_FIND_REQUIRED TRUE)
+set(CFITSIO_FIND_REQUIRED FALSE)
 
 if (NOT CFITSIO_FOUND)
     # Manually parse CPLUS_INCLUDE_PATH to add paths to search
