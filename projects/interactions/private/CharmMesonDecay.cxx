@@ -67,22 +67,6 @@ CharmMesonDecay::CharmMesonDecay(siren::dataclasses::Particle::ParticleType prim
 
     mD = particleMass(siren::dataclasses::Particle::ParticleType::D0);
     mK = particleMass(siren::dataclasses::Particle::ParticleType::KMinus);
-  } else if (primary == siren::dataclasses::Particle::ParticleType::DMinus) {
-    // CP-conjugate of D+: same form-factor constants, kaon charge flipped.
-    constants[0] = 0.725; // this is f^+(0)|V_cs| for charged D
-    constants[1] = 0.44; // this is alpha, same for all K final states
-    constants[2] = 2.01027; // this is excited charged D meson
-
-    mD = particleMass(siren::dataclasses::Particle::ParticleType::DMinus);
-    mK = particleMass(siren::dataclasses::Particle::ParticleType::K0); // not K0Bar
-  } else if (primary == siren::dataclasses::Particle::ParticleType::D0Bar) {
-    // CP-conjugate of D0: same form-factor constants, kaon charge flipped.
-    constants[0] = 0.719; // this is f^+(0)|V_cs| for charged D
-    constants[1] = 0.50; // this is alpha, same for all K final states
-    constants[2] = 2.00697; // this is excited charged D meson
-
-    mD = particleMass(siren::dataclasses::Particle::ParticleType::D0Bar);
-    mK = particleMass(siren::dataclasses::Particle::ParticleType::KPlus); // not KMinus
   } else if (primary == siren::dataclasses::Particle::ParticleType::DsPlus ||
              primary == siren::dataclasses::Particle::ParticleType::DsMinus) {
     // Ds -> (eta / eta' / phi) + mu + nu uses pure 3-body phase space (no
@@ -224,19 +208,6 @@ double CharmMesonDecay::TotalDecayWidthForFinalState(dataclasses::InteractionRec
     std::set<siren::dataclasses::Particle::ParticleType> kminus_muplus_numu = {siren::dataclasses::Particle::ParticleType::KMinus,
                                                                             siren::dataclasses::Particle::ParticleType::MuPlus,
                                                                             siren::dataclasses::Particle::ParticleType::NuMu};
-    // CP-conjugate decay-mode sets for DMinus / D0Bar
-    std::set<siren::dataclasses::Particle::ParticleType> k0_eminus_nuebar = {siren::dataclasses::Particle::ParticleType::K0,
-                                                                            siren::dataclasses::Particle::ParticleType::EMinus,
-                                                                            siren::dataclasses::Particle::ParticleType::NuEBar};
-    std::set<siren::dataclasses::Particle::ParticleType> k0_muminus_numubar = {siren::dataclasses::Particle::ParticleType::K0,
-                                                                            siren::dataclasses::Particle::ParticleType::MuMinus,
-                                                                            siren::dataclasses::Particle::ParticleType::NuMuBar};
-    std::set<siren::dataclasses::Particle::ParticleType> kplus_eminus_nuebar = {siren::dataclasses::Particle::ParticleType::KPlus,
-                                                                            siren::dataclasses::Particle::ParticleType::EMinus,
-                                                                            siren::dataclasses::Particle::ParticleType::NuEBar};
-    std::set<siren::dataclasses::Particle::ParticleType> kplus_muminus_numubar = {siren::dataclasses::Particle::ParticleType::KPlus,
-                                                                            siren::dataclasses::Particle::ParticleType::MuMinus,
-                                                                            siren::dataclasses::Particle::ParticleType::NuMuBar};
     std::set<siren::dataclasses::Particle::ParticleType> hadrons_muplus_numu = {siren::dataclasses::Particle::ParticleType::Hadrons,
                                                                             siren::dataclasses::Particle::ParticleType::MuPlus,
                                                                             siren::dataclasses::Particle::ParticleType::NuMu};
