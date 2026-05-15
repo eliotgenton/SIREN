@@ -751,33 +751,8 @@ def main():
         seed=args.seed
     )
 
-    parquet_path = path + ".parquet"
-    root_path    = path + ".root"
-
-    myopts = {
-        "-i":  parquet_path,
-        "-o":  root_path,
-        "-c":  f"{can_info['CAN_Zmin_M']},{can_info['CAN_Zmax_M']},{can_info['CAN_Radius_M']}",
-        "-x":  f"{can_info['CAN_X_M']},{can_info['CAN_Y_M']}",
-        "-d":  f"{can_info['CAN_Depth_M']}",
-        "-r":  "1",
-        "-n":  str(int(float(args.config['nev']))),
-        "-a":  f"{args.config['gamma']}",
-        "-e":  f"{args.config['emin_gev']}",
-        "-me": f"{args.config['emax_gev']}",
-        "-f":  f"{args.config['flavor']}",
-        "-t":  "0.,100.",
-        "-M":  "gSeaGen"
-    }
-    import aa  # deferred: needs aanet module loaded
-    argv    = [str(x) for kv in myopts.items() for x in kv]
-    options = aa.Options(main.__doc__, argv)
-
-    print("\n[INFO] Using config:\n" + json.dumps(args.config, indent=2))
-    write_gSeaGen_rootfile(
-        parquet_path, options=options,
-        decay_mode=args.config.get("decay", "")
-    )
+    # ROOT conversion is handled by parquet_to_root_km3net.py (Step 2 in siren.smk).
+    print(f"[INFO] Injection complete — parquet: {path}.parquet")
 
 
 if __name__ == "__main__":
