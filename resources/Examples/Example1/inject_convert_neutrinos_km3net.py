@@ -367,7 +367,7 @@ def run_simulation(config: dict, output: str, seed: int) -> str:
         sec_vtx = siren.distributions.SecondaryPhysicalVertexDistribution()
 
         for d_type in d_types:
-            d_decay = siren.interactions.CharmMesonDecay3Body(
+            d_decay = siren.interactions.CharmMesonDecay(
                 primary_type=d_type, force_muonic=force_muonic
             )
             secondary_interactions[d_type]            = [d_eloss, d_decay]
