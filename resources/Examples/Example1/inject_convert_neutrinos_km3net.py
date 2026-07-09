@@ -163,6 +163,20 @@ def get_cross_section_paths(config, xs_prepend, mode):
                 os.path.join(xs_prepend, f"dsdxdy_{sign}_NC_iso.fits"),
                 os.path.join(xs_prepend, f"sigma_{sign}_NC_iso.fits")
             ))
+        elif is_new and config.get("charm_pdf"):
+            # Single-PDF override (e.g. "HERAPDF15NLO_EIG_central", the PDF used
+            # by CSMS): one isoscalar spline pair instead of the default
+            # EPPS21(O16)+HERAPDF2.0(H) two-target split. Downstream,
+            # build_charm_interactions then uses a single HNucleus target.
+            pdf = config["charm_pdf"]
+            cc_paths.append((
+                os.path.join(xs_prepend, f"dsdxidy_{sign}-N-cc-charm-{pdf}.fits"),
+                os.path.join(xs_prepend, f"sigma_{sign}-N-cc-charm-{pdf}.fits")
+            ))
+            nc_paths.append((
+                os.path.join(xs_prepend, f"dsdxidy_{sign}-N-nc-charm-{pdf}.fits"),
+                os.path.join(xs_prepend, f"sigma_{sign}-N-nc-charm-{pdf}.fits")
+            ))
         elif is_new:
             cc_paths.extend([
                 (os.path.join(xs_prepend, f"dsdxidy_{sign}-N-cc-charm-{oxygen_pdf}.fits"),
@@ -498,6 +512,13 @@ def create_interaction(event, time, decay_mode=""):
             ))
 
     event_weight = float(event["event_weight"])
+
+    # The AJ slow-rescaled charm cross section is zero in part of the sampled
+    # (x,y) phase space (below charm threshold); SIREN's Weighter returns NaN
+    # there instead of 0. The physical weight of a zero-cross-section point is
+    # exactly 0 - set it so these events contribute nothing downstream.
+    if not np.isfinite(event_weight):
+        event_weight = 0.0
 
     # When forcing muonic decay, apply branching ratio correction.
     if decay_mode == "muonic":
