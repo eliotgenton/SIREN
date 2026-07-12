@@ -167,7 +167,7 @@ def get_cross_section_paths(config, xs_prepend, mode):
             # Single-PDF override (e.g. "HERAPDF15NLO_EIG_central", the PDF used
             # by CSMS): one isoscalar spline pair instead of the default
             # EPPS21(O16)+HERAPDF2.0(H) two-target split. Downstream,
-            # build_charm_interactions then uses a single HNucleus target.
+            # build_charm_interactions then uses a single Nucleon target.
             pdf = config["charm_pdf"]
             cc_paths.append((
                 os.path.join(xs_prepend, f"dsdxidy_{sign}-N-cc-charm-{pdf}.fits"),
@@ -255,7 +255,11 @@ def build_charm_interactions(config, primary_type):
             siren.dataclasses.ParticleType.HNucleus,
         ]
     else:
-        targets = [siren.dataclasses.ParticleType.HNucleus]
+        # Isoscalar per-nucleon splines must count ALL nucleons: the Nucleon
+        # pseudo-target expands to the full nucleon density (MaterialModel.cxx).
+        # HNucleus here caused a flat x0.1082 weight deficit in ORCA water
+        # (see dimuon-analysis/notes/csms_charm_normalization.md).
+        targets = [siren.dataclasses.ParticleType.Nucleon]
 
     xs_list = []
     if current_type in ("cc", "both"):
