@@ -331,19 +331,23 @@ write_basic_package_version_file(
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
-export(EXPORT ${PROJECT_NAME}Config FILE "${PROJECT_NAME}Config.cmake"
-       NAMESPACE ${PROJECT_NAME}::)
+# FASRC build workaround (see SIREN_build_FASRC_2026-05-13.md, item 5):
+# these export commands fail at the cmake generate step because SIREN_math
+# links delabella_static, which is not in any export set. The cmake package
+# config is not needed for the python staging build.
+# export(EXPORT ${PROJECT_NAME}Config FILE "${PROJECT_NAME}Config.cmake"
+#        NAMESPACE ${PROJECT_NAME}::)
 
 # Make importable from install location
 set(_config_dir share/${PROJECT_NAME}/cmake)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
   DESTINATION ${_config_dir}
 )
-install(EXPORT ${PROJECT_NAME}Config
-  FILE "${PROJECT_NAME}Config.cmake"
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION "${_config_dir}"
-)
+# install(EXPORT ${PROJECT_NAME}Config
+#   FILE "${PROJECT_NAME}Config.cmake"
+#   NAMESPACE ${PROJECT_NAME}::
+#   DESTINATION "${_config_dir}"
+# )
 
 MESSAGE("")
 MESSAGE("Done!")
