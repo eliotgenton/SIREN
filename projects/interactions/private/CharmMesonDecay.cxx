@@ -1,6 +1,7 @@
 #include "SIREN/interactions/CharmMesonDecay.h"
 
 #include <cmath>
+#include <stdexcept>
 
 #include <rk/rk.hh>
 #include <rk/geom3.hh>
@@ -414,6 +415,20 @@ std::vector<dataclasses::InteractionSignature> CharmMesonDecay::GetPossibleSigna
       sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::KPlus;
       sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuMinus;
       sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMuBar;
+    } else if (primary==siren::dataclasses::Particle::ParticleType::DsPlus) {
+      // Hadrons stands in for eta/eta'/phi, sampled inline in SampleFinalState.
+      sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::Hadrons;
+      sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuPlus;
+      sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMu;
+    } else if (primary==siren::dataclasses::Particle::ParticleType::DsMinus) {
+      sig.secondary_types[0] = siren::dataclasses::Particle::ParticleType::Hadrons;
+      sig.secondary_types[1] = siren::dataclasses::Particle::ParticleType::MuMinus;
+      sig.secondary_types[2] = siren::dataclasses::Particle::ParticleType::NuMuBar;
+    } else {
+      // An unmatched primary would otherwise push an uninitialized signature.
+      throw std::runtime_error("CharmMesonDecay::GetPossibleSignaturesFromParent: "
+                               "no forced-muonic signature for primary type "
+                               + std::to_string(static_cast<int32_t>(primary)));
     }
     signatures.push_back(sig);
     return signatures;

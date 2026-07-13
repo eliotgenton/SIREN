@@ -98,9 +98,16 @@ SIREN_PARTICLES = {
     -16: siren.dataclasses.ParticleType.NuTauBar,
 }
 
-# Branching ratios for D-meson -> K mu nu (PDG values)
-# Used to correct event weights when forcing muonic decay
-BR_MUONIC = {411: 0.176, -411: 0.176, 421: 0.067, -421: 0.067}
+# Branching ratios for D-meson -> mu + X (PDG inclusive values)
+# Used to correct event weights when forcing muonic decay.
+# Convention: inclusive B(D -> mu X) with exclusive decay kinematics
+# (D+/D0 sample K/K* mu nu; Ds samples eta/eta'/phi mu nu). The inclusive
+# BR intentionally exceeds the implemented-modes sum (e.g. D+: 0.176 vs
+# 0.0874+0.0533 = 0.141) — a pre-existing modeling choice, flagged in the
+# technote hadronization systematic. Ds follows the same convention:
+# inclusive B(Ds -> mu X) ~= 0.063.
+BR_MUONIC = {411: 0.176, -411: 0.176, 421: 0.067, -421: 0.067,
+             431: 0.063, -431: 0.063}
 
 c    = 3e-1   # m / ns
 MJD0 = 40587. # MJD corresponding to 01.01.1970 00:00:00 UTC
@@ -372,14 +379,23 @@ def run_simulation(config: dict, output: str, seed: int) -> str:
 
         # Determine which D-meson types this primary flavor can produce.
         # QuarkDISFromSpline uses DTypesForPrimary() internally:
-        #   nu  (positive PDG) -> DPlus, D0
-        #   nubar (negative PDG) -> DMinus, D0Bar
+        #   nu  (positive PDG) -> D0, DPlus, DsPlus
+        #   nubar (negative PDG) -> D0Bar, DMinus, DsMinus
+        # (fragmentation fractions 0.60 : 0.23 : 0.15)
+        # Ds requires a siren build >= the Ds merge (4d36ed58); older builds
+        # named the anti-particle DsMinusBar and generate D0/D+- only. Gate on
+        # the module so this script stays runnable against both builds.
+        _has_ds = hasattr(PT, "DsMinus")
+        if not _has_ds:
+            print("[WARNING] Loaded siren module predates Ds support - "
+                  "generating D0/D+- ONLY (no Ds). Rebuild/repoint siren to "
+                  "include Ds in the charm hadronization.")
         _is_nubar = primary_type in (
             PT.NuMuBar, PT.NuEBar, PT.NuTauBar)
         if _is_nubar:
-            d_types = [PT.DMinus, PT.D0Bar]
+            d_types = [PT.DMinus, PT.D0Bar] + ([PT.DsMinus] if _has_ds else [])
         else:
-            d_types = [PT.DPlus, PT.D0]
+            d_types = [PT.DPlus, PT.D0] + ([PT.DsPlus] if _has_ds else [])
 
         d_eloss = siren.interactions.DMesonELoss()
         sec_vtx = siren.distributions.SecondaryPhysicalVertexDistribution()
@@ -526,7 +542,7 @@ def create_interaction(event, time, decay_mode=""):
 
     # When forcing muonic decay, apply branching ratio correction.
     if decay_mode == "muonic":
-        d_meson_pdg = next((p for p in primary_types if abs(p) in (411, 421)), None)
+        d_meson_pdg = next((p for p in primary_types if abs(p) in (411, 421, 431)), None)
         if d_meson_pdg is not None and d_meson_pdg in BR_MUONIC:
             event_weight *= BR_MUONIC[d_meson_pdg]
 
