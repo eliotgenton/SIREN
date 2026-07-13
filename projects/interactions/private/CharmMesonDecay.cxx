@@ -115,6 +115,18 @@ CharmMesonDecay::CharmMesonDecay(siren::dataclasses::Particle::ParticleType prim
     constants[2] = 2.00697;
     mD = particleMass(siren::dataclasses::Particle::ParticleType::D0Bar);
     mK = particleMass(siren::dataclasses::Particle::ParticleType::KPlus); // not KMinus
+  } else if (primary == siren::dataclasses::Particle::ParticleType::DsPlus ||
+             primary == siren::dataclasses::Particle::ParticleType::DsMinus) {
+    // Ds -> (eta / eta' / phi) + mu + nu uses pure 3-body phase space (no
+    // form factor); daughter sampled inline in SampleFinalState. The
+    // computeDiffGammaCDF table is only consumed by the D+/D0 form-factor
+    // logic — computing it here with uninitialized constants was the
+    // "Integral failed to converge" crash. Same skip as the one-argument
+    // constructor.
+    return;
+  } else {
+    throw std::runtime_error("CharmMesonDecay: no decay constants for primary type "
+                             + std::to_string(static_cast<int32_t>(primary)));
   }
 
   computeDiffGammaCDF(constants, mD, mK);
